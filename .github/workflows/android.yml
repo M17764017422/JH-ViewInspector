@@ -42,9 +42,11 @@ jobs:
           rm keystore.b64
           ls -l ViewInspector/app/keystore.jks
 
-      # ???????????????????????????????????????      # - name: Debug keystore (only for debugging)
-      #   run: |
-      #     keytool -list -v -keystore ViewInspector/app/keystore.jks -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS"
+      - name: Debug keystore (only for debugging)
+        run: |
+          echo "Checking keystore file..."
+          file ViewInspector/app/keystore.jks
+          keytool -list -v -keystore ViewInspector/app/keystore.jks -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" || echo "Keystore validation failed"
 
       - name: Build release APK
         run: |
@@ -56,3 +58,32 @@ jobs:
         with:
           name: viewinspector-release-apk
           path: ViewInspector/app/build/outputs/apk/release/app-release.apk
+
+      - name: Create GitHub Release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the current date and time for version tag
+          VERSION_TAG="v1.0.0"
+          
+          # Create release notes
+          cat > release_notes.txt << 'EOF'
+          ## ViewInspector $VERSION_TAG
+          
+          ??? ViewInspector ??????????          
+          ### ??????
+          - Android ??????????          - ????????????
+          
+          ### ???
+          - **app-release.apk**: ?????? Android APK ????????????
+          
+          ### ??????
+          - ???????Android 7.0 ????????          - ???????????????????????          EOF
+          
+          # Create release
+          gh release create "$VERSION_TAG" \
+            ViewInspector/app/build/outputs/apk/release/app-release.apk \
+            --title "ViewInspector $VERSION_TAG" \
+            --notes-file release_notes.txt \
+            --repo M17764017422/JH-ViewInspector
