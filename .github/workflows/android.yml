@@ -85,35 +85,41 @@ jobs:
           fi
           
           echo "Creating release: $VERSION_TAG"
+          
+          # Prepare release notes
+          RELEASE_NOTES="## ViewInspector $VERSION_TAG
 
-          # Create release notes
-          cat > release_notes.txt << EOF
-          ## ViewInspector $VERSION_TAG
+This is the official release of ViewInspector.
 
-          This is the official release of ViewInspector.
+### Features
+- Android view inspection tool
+- Support for signed release builds
 
-          ### Features
-          - Android view inspection tool
-          - Support for signed release builds
+### Downloads
+- **app-release.apk**: Signed Android APK file, ready to install
 
-          ### Downloads
-          - **app-release.apk**: Signed Android APK file, ready to install
-
-          ### Notes
-          - Requires Android 7.0 or higher
-          - Recommended to test on real devices for best experience
-EOF
-
+### Notes
+- Requires Android 7.0 or higher
+- Recommended to test on real devices for best experience"
+          
           # Add custom release notes if provided
           if [[ -n "${{ github.event.inputs.release_notes }}" ]]; then
-            echo "" >> release_notes.txt
-            echo "### Update Notes" >> release_notes.txt
-            echo "${{ github.event.inputs.release_notes }}" >> release_notes.txt
+            RELEASE_NOTES="$RELEASE_NOTES
+
+### Update Notes
+${{ github.event.inputs.release_notes }}"
           fi
+          
+          echo "Release notes:"
+          echo "$RELEASE_NOTES"
+          echo ""
+          echo "Creating GitHub release..."
           
           # Create release
           gh release create "$VERSION_TAG" \
             ViewInspector/app/build/outputs/apk/release/app-release.apk \
             --title "ViewInspector $VERSION_TAG" \
-            --notes-file release_notes.txt \
+            --notes "$RELEASE_NOTES" \
             --repo M17764017422/JH-ViewInspector
+          
+          echo "Release created successfully!"
