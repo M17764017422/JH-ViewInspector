@@ -29,15 +29,12 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Restore Gradle cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Install Gradle (via SDKMAN)
+        run: |
+          curl -s "https://get.sdkman.io" | bash
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk install gradle 8.4
+          gradle -v
 
       - name: Decode keystore (from SECRET) to file
         if: env.KEYSTORE_BASE64 != ''
@@ -47,16 +44,15 @@ jobs:
           echo "${{ env.KEYSTORE_BASE64 }}" | base64 --decode > ViewInspector/app/keystore.jks
           ls -l ViewInspector/app/keystore.jks
 
-      # 临时调试（如果需要，启用后运行一次，确认无误后移除）
+      # 可选调试（仅用于一次性调试，确认没问题后建议移除）
       # - name: Debug keystore (only for debugging)
       #   run: |
       #     keytool -list -v -keystore ViewInspector/app/keystore.jks -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS"
 
       - name: Build release APK
-        working-directory: ViewInspector
         run: |
-          chmod +x ./gradlew
-          ./gradlew :app:assembleRelease --no-daemon -Pandroid.injected.testOnly=false
+          cd ViewInspector
+          gradle :app:assembleRelease --no-daemon -Pandroid.injected.testOnly=false
 
       - name: Upload signed APK artifact
         uses: actions/upload-artifact@v4
