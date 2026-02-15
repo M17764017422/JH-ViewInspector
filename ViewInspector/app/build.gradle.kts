@@ -16,7 +16,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // Signing configuration: read keystore path and passwords from environment variables
+    // ====== signingConfigs: 从环境变量读取 keystore 信息 ======
     signingConfigs {
         create("release") {
             val keystorePath = System.getenv("KEYSTORE_PATH") ?: "keystore.jks"
