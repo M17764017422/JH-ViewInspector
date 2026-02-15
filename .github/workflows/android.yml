@@ -90,20 +90,24 @@ jobs:
           cat > release_notes.txt << EOF
           ## ViewInspector $VERSION_TAG
 
-          ??? ViewInspector ??????????
-          ### ??????
-          - Android ??????????          - ????????????
+          This is the official release of ViewInspector.
 
-          ### ???
-          - **app-release.apk**: ?????? Android APK ????????????
+          ### Features
+          - Android view inspection tool
+          - Support for signed release builds
 
-          ### ??????
-          - ???????Android 7.0 ????????          - ???????????????????????EOF
+          ### Downloads
+          - **app-release.apk**: Signed Android APK file, ready to install
+
+          ### Notes
+          - Requires Android 7.0 or higher
+          - Recommended to test on real devices for best experience
+EOF
 
           # Add custom release notes if provided
           if [[ -n "${{ github.event.inputs.release_notes }}" ]]; then
             echo "" >> release_notes.txt
-            echo "### ??????" >> release_notes.txt
+            echo "### Update Notes" >> release_notes.txt
             echo "${{ github.event.inputs.release_notes }}" >> release_notes.txt
           fi
           
