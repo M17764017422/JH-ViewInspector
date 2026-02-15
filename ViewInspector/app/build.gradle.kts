@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     id("com.android.application")
 }
 
@@ -16,11 +16,17 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // ====== signingConfigs: 从环境变量读取 keystore 信息 ======
+    // ====== signingConfigs: ???????????keystore ??? ======
     signingConfigs {
         create("release") {
             val keystorePath = System.getenv("KEYSTORE_PATH") ?: "keystore.jks"
-            storeFile = file(keystorePath)
+            // ??? KEYSTORE_PATH ?????? ViewInspector ???????????????????app ???
+            val adjustedPath = if (keystorePath.startsWith("app/")) {
+                keystorePath.substring(4)
+            } else {
+                keystorePath
+            }
+            storeFile = file(adjustedPath)
             storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
             keyAlias = System.getenv("KEY_ALIAS") ?: ""
             keyPassword = System.getenv("KEY_PASSWORD") ?: ""
