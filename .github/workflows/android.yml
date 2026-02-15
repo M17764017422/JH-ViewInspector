@@ -6,6 +6,9 @@ on:
       release_notes:
         description: 'Release notes (optional)'
         required: false
+      version_override:
+        description: 'Override version tag (e.g., v1.2.3)'
+        required: false
 
 jobs:
   build:
@@ -64,11 +67,27 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get the current date and time for version tag
-          VERSION_TAG="v1.0.0"
+          # Determine version tag
+          if [[ -n "${{ github.event.inputs.version_override }}" ]]; then
+            VERSION_TAG="${{ github.event.inputs.version_override }}"
+          else
+            # Get latest release tag and increment
+            LATEST_TAG=$(gh release list --repo M17764017422/JH-ViewInspector --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || echo "v0.0.0")
+            
+            # Parse version and increment patch version
+            VERSION_NUM=$(echo "$LATEST_TAG" | sed 's/v//')
+            MAJOR=$(echo "$VERSION_NUM" | cut -d. -f1)
+            MINOR=$(echo "$VERSION_NUM" | cut -d. -f2)
+            PATCH=$(echo "$VERSION_NUM" | cut -d. -f3)
+            
+            PATCH=$((PATCH + 1))
+            VERSION_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+          fi
+          
+          echo "Creating release: $VERSION_TAG"
           
           # Create release notes
-          cat > release_notes.txt << 'EOF'
+          cat > release_notes.txt << EOF
           ## ViewInspector $VERSION_TAG
           
           ??? ViewInspector ??????????          
@@ -80,6 +99,13 @@ jobs:
           
           ### ??????
           - ???????Android 7.0 ????????          - ???????????????????????          EOF
+          
+          # Add custom release notes if provided
+          if [[ -n "${{ github.event.inputs.release_notes }}" ]]; then
+            echo "" >> release_notes.txt
+            echo "### ??????" >> release_notes.txt
+            echo "${{ github.event.inputs.release_notes }}" >> release_notes.txt
+          fi
           
           # Create release
           gh release create "$VERSION_TAG" \
