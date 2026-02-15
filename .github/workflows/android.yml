@@ -41,7 +41,9 @@ jobs:
         run: |
           echo "Decoding keystore to ViewInspector/app/keystore.jks"
           mkdir -p ViewInspector/app
-          printf "%s" "$KEYSTORE_BASE64" | base64 --decode > ViewInspector/app/keystore.jks
+          printf "%s" "$KEYSTORE_BASE64" > keystore.b64
+          base64 --decode -i keystore.b64 > ViewInspector/app/keystore.jks
+          rm keystore.b64
           ls -l ViewInspector/app/keystore.jks
 
       # ???????????????????????????????????????      # - name: Debug keystore (only for debugging)
