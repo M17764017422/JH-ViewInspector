@@ -143,35 +143,28 @@ public class ViewInspectorFloatingService extends Service {
     }
 
     private void refreshViewInfo() {
-        ViewInspectorAccessibilityService service = ViewInspectorAccessibilityService.getInstance();
-        if (service != null) {
-            List<ViewInfo> viewInfos = service.getCurrentWindowViewInfos();
-            
-            // 统计可点击控件数量
-            int clickableCount = 0;
-            for (ViewInfo info : viewInfos) {
-                if (info.isClickable) {
-                    clickableCount++;
-                }
+        List<视图信息> viewInfos = 页面检视.获取所有控件().取列表();
+        
+        // 统计可点击控件数量
+        int clickableCount = 0;
+        for (视图信息 info : viewInfos) {
+            if (info.可点击) {
+                clickableCount++;
             }
-            
-            StringBuilder sb = new StringBuilder();
-            sb.append(getString(R.string.total_controls_count, viewInfos.size()));
-            sb.append(" ");
-            sb.append(getString(R.string.clickable_controls_count, clickableCount));
-            sb.append("\n");
-            sb.append(getString(R.string.return_to_app_for_details));
-            
-            infoTextView.setText(sb.toString());
-            
-            // 发送广播通知主页面刷新
-            Intent refreshIntent = new Intent("com.example.viewinspector.REFRESH_VIEW_INFO");
-            sendBroadcast(refreshIntent);
-            
-        } else {
-            infoTextView.setText(R.string.accessibility_service_not_running_floating);
-            Toast.makeText(this, R.string.accessibility_service_required, Toast.LENGTH_SHORT).show();
         }
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append(getString(R.string.total_controls_count, viewInfos.size()));
+        sb.append(" ");
+        sb.append(getString(R.string.clickable_controls_count, clickableCount));
+        sb.append("\n");
+        sb.append(getString(R.string.return_to_app_for_details));
+        
+        infoTextView.setText(sb.toString());
+        
+        // 发送广播通知主页面刷新
+        Intent refreshIntent = new Intent("com.example.viewinspector.REFRESH_VIEW_INFO");
+        sendBroadcast(refreshIntent);
     }
 
     private void startForegroundService() {

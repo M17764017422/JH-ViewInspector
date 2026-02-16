@@ -26,10 +26,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.viewinspector.ViewInfo;
-import com.example.viewinspector.ViewInspectorAccessibilityService;
-import com.example.viewinspector.R;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private Button startFloatingButton;
     private androidx.appcompat.widget.Toolbar toolbar;
     
-    private List<ViewInfo> allViewInfos = new ArrayList<>();
+    private List<视图信息> allViewInfos = new ArrayList<>();
     private String currentLanguage = "zh"; // 默认中文
     
     private final ActivityResultLauncher<Intent> accessibilitySettingsLauncher = 
@@ -205,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void checkAccessibilityService() {
-        if (!ViewInspectorAccessibilityService.isServiceEnabled(this)) {
+        if (!页面检视服务.无障碍已开启(this)) {
             Toast.makeText(this, R.string.accessibility_service_required, Toast.LENGTH_LONG).show();
             Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
             accessibilitySettingsLauncher.launch(intent);
@@ -234,7 +230,7 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void refreshViewInfo() {
-        if (!ViewInspectorAccessibilityService.isServiceEnabled(this)) {
+        if (!页面检视服务.无障碍已开启(this)) {
             Toast.makeText(this, R.string.accessibility_service_not_running, Toast.LENGTH_SHORT).show();
             scrollView.setVisibility(View.GONE);
             emptyView.setVisibility(View.VISIBLE);
@@ -242,9 +238,9 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         
-        ViewInspectorAccessibilityService service = ViewInspectorAccessibilityService.getInstance();
+        页面检视服务 service = 页面检视服务.获取实例();
         if (service != null) {
-            allViewInfos = service.getCurrentWindowViewInfos();
+            allViewInfos = 页面检视.获取所有控件().取列表();
             applyFilters();
             
             if (allViewInfos.isEmpty()) {
@@ -258,9 +254,9 @@ public class MainActivity extends AppCompatActivity {
         } else {
             // 服务可能刚启动，稍等一下再试
             new android.os.Handler().postDelayed(() -> {
-                ViewInspectorAccessibilityService delayedService = ViewInspectorAccessibilityService.getInstance();
+                页面检视服务 delayedService = 页面检视服务.获取实例();
                 if (delayedService != null) {
-                    allViewInfos = delayedService.getCurrentWindowViewInfos();
+                    allViewInfos = 页面检视.获取所有控件().取列表();
                     applyFilters();
                     
                     if (allViewInfos.isEmpty()) {
