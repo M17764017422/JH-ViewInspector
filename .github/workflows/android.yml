@@ -1,154 +1,123 @@
-name: Android signed release
+name: Android 签名发布
 
 on:
   workflow_dispatch:
     inputs:
       release_notes:
-        description: 'Release notes (optional)'
+        description: '更新说明（可选）'
         required: false
       version_override:
-        description: 'Override version tag (e.g., v1.2.3)'
+        description: '覆盖版本标签（例如：v1.2.3）'
         required: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Required for creating releases
+      contents: write
+
     env:
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      KEYSTORE_PATH: app/keystore.jks
 
     steps:
-      - name: Checkout repository
+      - name: 检出代码
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 17
+      - name: 设置 JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Make gradlew executable
+      - name: 赋予 gradlew 执行权限
         run: chmod +x ViewInspector/gradlew
 
-      - name: Decode keystore (from SECRET) to file
-        if: ${{ env.KEYSTORE_BASE64 != '' }}  # FIXED: Valid expression syntax
+      - name: 解码密钥库文件
+        if: ${{ env.KEYSTORE_BASE64 != '' }}
         run: |
-          echo "Decoding keystore to ViewInspector/app/keystore.jks"
+          echo "正在解码密钥库到 ViewInspector/app/keystore.jks"
           mkdir -p ViewInspector/app
           echo "$KEYSTORE_BASE64" | base64 --decode > ViewInspector/app/keystore.jks
-          echo "✓ Keystore decoded successfully"
+          echo "✓ 密钥库解码完成"
 
-      - name: Debug keystore (non-critical)
+      - name: 验证密钥库（调试用）
         if: ${{ env.KEYSTORE_BASE64 != '' }}
-        continue-on-error: true  # Prevent workflow failure on debug step
+        continue-on-error: true
         run: |
-          echo "Validating keystore..."
-          keytool -list -v \
-            -keystore ViewInspector/app/keystore.jks \
-            -storepass "$KEYSTORE_PASSWORD" \
-            -alias "$KEY_ALIAS" 2>&1 || echo "⚠ Keystore validation failed (non-critical)"
+          echo "正在验证密钥库..."
+          keytool -list -v -keystore ViewInspector/app/keystore.jks -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" 2>&1 || echo "⚠ 密钥库验证失败（不影响构建）"
 
-      - name: Verify keystore exists for signing
-        if: ${{ env.KEYSTORE_BASE64 != '' }}
-        run: |
-          if [ ! -f "ViewInspector/app/keystore.jks" ]; then
-            echo "❌ Keystore file missing at expected path!"
-            exit 1
-          fi
-          echo "✓ Keystore found at ViewInspector/app/keystore.jks"
-
-      - name: Build release APK
+      - name: 构建签名 APK
         run: |
           cd ViewInspector
           ./gradlew :app:assembleRelease --no-daemon -Pandroid.injected.testOnly=false
-          # Verify signed APK was generated
           if [ ! -f "app/build/outputs/apk/release/app-release.apk" ]; then
-            echo "❌ Signed APK not found after build!"
+            echo "❌ 未找到签名 APK 文件！"
             exit 1
           fi
-          echo "✓ Signed APK generated successfully"
+          echo "✓ 签名 APK 构建成功"
 
-      - name: Upload signed APK artifact
+      - name: 上传 APK 到构件
         uses: actions/upload-artifact@v4
         with:
           name: viewinspector-release-apk
           path: ViewInspector/app/build/outputs/apk/release/app-release.apk
 
-      - name: Create GitHub Release
-        if: ${{ success() && (github.event.inputs.version_override != '' || env.KEYSTORE_BASE64 != '') }}
+      - name: 创建 GitHub 发布版本
+        if: ${{ success() }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          REPO="${{ github.repository }}"
-          VERSION_TAG=""
-          
-          # Use override if provided
+          # 确定版本标签
           if [[ -n "${{ github.event.inputs.version_override }}" ]]; then
             VERSION_TAG="${{ github.event.inputs.version_override }}"
-            # Ensure v-prefix consistency
             [[ "$VERSION_TAG" != v* ]] && VERSION_TAG="v$VERSION_TAG"
           else
-            # Get latest release tag safely
-            LATEST_TAG=$(gh release list --repo "$REPO" --limit 1 --json tagName --jq '.[0].tagName // "v0.0.0"' 2>/dev/null)
-            
-            # Robust version parsing with fallbacks
+            LATEST_TAG=$(gh release list --repo ${{ github.repository }} --limit 1 --json tagName --jq '.[0].tagName // "v0.0.0"' 2>/dev/null)
             VERSION_NUM="${LATEST_TAG#v}"
             IFS='.' read -r MAJOR MINOR PATCH <<< "${VERSION_NUM:-0.0.0}"
             MAJOR="${MAJOR:-0}"
             MINOR="${MINOR:-0}"
             PATCH="${PATCH:-0}"
-            
-            # Increment patch version
             PATCH=$((PATCH + 1))
             VERSION_TAG="v${MAJOR}.${MINOR}.${PATCH}"
           fi
           
-          echo "Creating release: $VERSION_TAG"
+          echo "正在创建发布版本: $VERSION_TAG"
           
-          # Prepare release notes
-          RELEASE_NOTES="## ViewInspector $VERSION_TAG
-
-This is the official release of ViewInspector.
-
-### Features
-- Android view inspection tool
-- Support for signed release builds
-
-### Downloads
-- **app-release.apk**: Signed Android APK file, ready to install
-
-### Requirements
-- Android 7.0 (API 24) or higher
-- Recommended to test on real devices for best experience"
+          # 生成发布说明（使用 echo 避免 YAML 解析错误）
+          echo "## ViewInspector $VERSION_TAG" > release_notes.txt
+          echo "" >> release_notes.txt
+          echo "ViewInspector 官方发布版本" >> release_notes.txt
+          echo "" >> release_notes.txt
+          echo "### 功能特点" >> release_notes.txt
+          echo "- Android 视图检查工具" >> release_notes.txt
+          echo "- 支持签名发布版本构建" >> release_notes.txt
+          echo "" >> release_notes.txt
+          echo "### 下载文件" >> release_notes.txt
+          echo "- **app-release.apk**：已签名的 Android 安装包，可直接安装使用" >> release_notes.txt
+          echo "" >> release_notes.txt
+          echo "### 使用要求" >> release_notes.txt
+          echo "- 需要 Android 7.0 或更高版本" >> release_notes.txt
+          echo "- 建议在真实设备上测试以获得最佳体验" >> release_notes.txt
           
-          # Append custom notes if provided
+          # 添加自定义更新说明（如果提供）
           if [[ -n "${{ github.event.inputs.release_notes }}" ]]; then
-            RELEASE_NOTES="${RELEASE_NOTES}
-
-### Update Notes
-${{ github.event.inputs.release_notes }}"
+            echo "" >> release_notes.txt
+            echo "### 本次更新内容" >> release_notes.txt
+            echo "${{ github.event.inputs.release_notes }}" >> release_notes.txt
           fi
           
-          # Create release with proper error handling
-          if gh release view "$VERSION_TAG" --repo "$REPO" &>/dev/null; then
-            echo "⚠ Release $VERSION_TAG already exists. Updating assets..."
-            gh release upload "$VERSION_TAG" \
-              ViewInspector/app/build/outputs/apk/release/app-release.apk \
-              --repo "$REPO" \
-              --clobber
-          else
-            gh release create "$VERSION_TAG" \
-              ViewInspector/app/build/outputs/apk/release/app-release.apk \
-              --title "ViewInspector $VERSION_TAG" \
-              --notes "$RELEASE_NOTES" \
-              --repo "$REPO"
-          fi
+          # 创建发布版本
+          gh release create "$VERSION_TAG" \
+            ViewInspector/app/build/outputs/apk/release/app-release.apk \
+            --title "ViewInspector $VERSION_TAG" \
+            --notes-file release_notes.txt \
+            --repo ${{ github.repository }}
           
-          echo "✓ Release created successfully: https://github.com/$REPO/releases/tag/$VERSION_TAG"
+          echo "✓ 发布版本创建成功：https://github.com/${{ github.repository }}/releases/tag/$VERSION_TAG"
