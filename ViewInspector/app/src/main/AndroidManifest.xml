@@ -2,10 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- 悬浮窗权限 -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- 前台服务基础权限 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <!-- Android 14+ 特殊用途前台服务权限（仅API34及以上需要） -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"
+        android:maxSdkVersion="34" />
 
     <application
         android:allowBackup="true"
@@ -18,18 +21,20 @@
         android:theme="@style/Theme.ViewInspector"
         tools:targetApi="31">
 
+        <!-- 应用主入口Activity 已适配中文重命名 -->
         <activity
-            android:name=".MainActivity"
+            android:name=".页面检视主活动"
             android:exported="true"
             android:label="View Inspector"
             android:theme="@style/Theme.ViewInspector">
+            <!-- 这两行是桌面入口的核心标记，绝对不能删改 -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- 无障碍服务 -->
+        <!-- 无障碍服务 原有配置正确，无需修改 -->
         <service
             android:name=".页面检视服务"
             android:exported="true"
@@ -42,12 +47,18 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
-        <!-- 悬浮窗服务 -->
+        <!-- 悬浮窗前台服务 已适配中文重命名 + 高版本合规配置 -->
         <service
-            android:name=".ViewInspectorFloatingService"
+            android:name=".页面检视悬浮窗服务"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="specialUse">
+            <!-- Android 14+ 强制要求：specialUse类型必须加用途说明，否则安装/启动会报错 -->
+            <meta-data
+                android:name="android.app.PROPERTY_SPECIAL_USE_FOREGROUND_SERVICE"
+                android:value="用于展示页面检视悬浮窗，实时显示当前页面控件信息"
+                tools:ignore="InvalidMetadata" />
+        </service>
 
     </application>
 
