@@ -23,7 +23,7 @@
 
 ### 安装
 
-1. 下载(https://github.com/M17764017422/JH-ViewInspector/releases)最新版本的APK文件
+1. [下载](https://github.com/M17764017422/JH-ViewInspector/releases)最新版本的APK文件
 2. 安装APK文件
 
 ### 使用方法
