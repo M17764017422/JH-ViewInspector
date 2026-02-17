@@ -278,14 +278,14 @@ public class MainActivity extends AppCompatActivity {
         String textFilter = textFilterEditText.getText().toString().toLowerCase();
         boolean clickableOnly = clickableFilterCheckBox.isChecked();
         
-        List<ViewInfo> filteredList = new ArrayList<>();
+        List<视图信息> filteredList = new ArrayList<>();
         
-        for (ViewInfo info : allViewInfos) {
+        for (视图信息 info : allViewInfos) {
             boolean matchesText = textFilter.isEmpty() || 
-                                (info.text != null && info.text.toLowerCase().contains(textFilter)) ||
-                                (info.contentDescription != null && info.contentDescription.toLowerCase().contains(textFilter));
+                                (info.显示文字 != null && info.显示文字.toLowerCase().contains(textFilter)) ||
+                                (info.描述内容 != null && info.描述内容.toLowerCase().contains(textFilter));
             
-            boolean matchesClickable = !clickableOnly || info.isClickable;
+            boolean matchesClickable = !clickableOnly || info.可点击;
             
             if (matchesText && matchesClickable) {
                 filteredList.add(info);
@@ -295,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
         displayViewInfos(filteredList);
     }
     
-    private void displayViewInfos(List<ViewInfo> viewInfos) {
+    private void displayViewInfos(List<视图信息> viewInfos) {
         if (viewInfos.isEmpty()) {
             scrollView.setVisibility(View.GONE);
             emptyView.setVisibility(View.VISIBLE);
@@ -309,51 +309,51 @@ public class MainActivity extends AppCompatActivity {
         StringBuilder sb = new StringBuilder();
         sb.append("<b>").append(getString(R.string.total_controls, viewInfos.size())).append("</b><br><br>");
         
-        for (ViewInfo info : viewInfos) {
+        for (视图信息 info : viewInfos) {
             // 构建树形结构缩进，使用HTML的非断空格
             String indent = "";
-            for (int i = 0; i < info.depth; i++) {
+            for (int i = 0; i < info.层级深度; i++) {
                 indent += "&nbsp;&nbsp;&nbsp;&nbsp;"; // 每个层级4个非断空格
             }
             
             // 添加树形连接线
-            if (info.depth > 0) {
+            if (info.层级深度 > 0) {
                 sb.append(indent).append("└─ ");
             } else {
                 sb.append(indent);
             }
             
             // 类名（黑色）
-            sb.append("<font color='#000000'><b>").append(info.className).append("</b></font>");
+            sb.append("<font color='#000000'><b>").append(info.控件类名).append("</b></font>");
             
             // 文本（蓝色）
-            if (info.text != null && !info.text.isEmpty()) {
-                sb.append(" <font color='#1976D2'>\"").append(info.text).append("\"</font>");
+            if (info.显示文字 != null && !info.显示文字.isEmpty()) {
+                sb.append(" <font color='#1976D2'>\"").append(info.显示文字).append("\"</font>");
             }
             
             // 描述（紫色）
-            if (info.contentDescription != null && !info.contentDescription.isEmpty()) {
-                sb.append(" <font color='#7B1FA2'>[").append(info.contentDescription).append("]</font>");
+            if (info.描述内容 != null && !info.描述内容.isEmpty()) {
+                sb.append(" <font color='#7B1FA2'>[").append(info.描述内容).append("]</font>");
             }
             
             // ID（橙色）
-            if (info.viewId != null) {
-                sb.append(" <font color='#FF6F00'>#").append(info.viewId).append("</font>");
+            if (info.控件ID != null) {
+                sb.append(" <font color='#FF6F00'>#").append(info.控件ID).append("</font>");
             }
             
             // 属性状态（绿色/红色）
-            sb.append(" <font color='").append(info.isClickable ? "#4CAF50" : "#F44336").append("'>")
-              .append(getString(R.string.clickable)).append(":").append(info.isClickable ? getString(R.string.yes) : getString(R.string.no))
+            sb.append(" <font color='").append(info.可点击 ? "#4CAF50" : "#F44336").append("'>")
+              .append(getString(R.string.clickable)).append(":").append(info.可点击 ? getString(R.string.yes) : getString(R.string.no))
               .append("</font>");
-            sb.append(" <font color='").append(info.isEnabled ? "#4CAF50" : "#F44336").append("'>")
-              .append(getString(R.string.enabled)).append(":").append(info.isEnabled ? getString(R.string.yes) : getString(R.string.no))
+            sb.append(" <font color='").append(info.可用 ? "#4CAF50" : "#F44336").append("'>")
+              .append(getString(R.string.enabled)).append(":").append(info.可用 ? getString(R.string.yes) : getString(R.string.no))
               .append("</font>");
-            sb.append(" <font color='").append(info.isFocusable ? "#4CAF50" : "#F44336").append("'>")
-              .append(getString(R.string.focusable)).append(":").append(info.isFocusable ? getString(R.string.yes) : getString(R.string.no))
+            sb.append(" <font color='").append(info.可聚焦 ? "#4CAF50" : "#F44336").append("'>")
+              .append(getString(R.string.focusable)).append(":").append(info.可聚焦 ? getString(R.string.yes) : getString(R.string.no))
               .append("</font>");
             
             // 位置（青色）
-            sb.append(" <font color='#0097A7'>").append(info.bounds).append("</font>");
+            sb.append(" <font color='#0097A7'>").append(info.屏幕区域).append("</font>");
             
             sb.append("<br>");
         }
@@ -368,7 +368,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         
-        if (!ViewInspectorAccessibilityService.isServiceEnabled(this)) {
+        if (!页面检视服务.无障碍已开启(this)) {
             Toast.makeText(this, R.string.please_enable_accessibility_first, Toast.LENGTH_SHORT).show();
             return;
         }

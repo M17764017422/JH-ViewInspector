@@ -31,7 +31,7 @@
 
         <!-- 无障碍服务 -->
         <service
-            android:name=".ViewInspectorAccessibilityService"
+            android:name=".页面检视服务"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
